@@ -96,8 +96,8 @@ sub deliverError
 my ($self, $message) = @_;
 
 
-	my $error = $self->createEvent ( "Adapter::error" );
-	my $errorNotify = $self->createEvent ( "Adapter::errorNotify" );
+	my $error       = $self->createTypedEvent ( "Adapter::error" );
+	my $errorNotify = $self->createTypedEvent ( "Adapter::errorNotify" );
 
 	my %fields        =(
 		errorText     => $message,
@@ -106,8 +106,8 @@ my ($self, $message) = @_;
 	);
 
 	foreach (keys %fields) {
-		$error->setUCStringField       ( $_, $fields{$_} );
-		$errorNotify->setUCStringField ( $_, $fields{$_} );
+		$error->setField       ( $_, $fields{$_} );
+		$errorNotify->setField ( $_, $fields{$_} );
 	}
 
 	$self->deliverReplyEvent ( $error );
@@ -135,7 +135,7 @@ this server." );
 	     $optional_dispatcher = $safe_classes->{$request_class};
 	}
 
-	$response_event ||= $self->createEvent ( "SOAP::Reply" );
+	$response_event ||= $self->createTypedEvent ( "SOAP::Reply" );
 
 	my $request_header_reader = sub {
 		my $key = shift;
@@ -145,18 +145,13 @@ this server." );
 	my $response_header_writer = sub {
 		my $key = shift;
 		$key =~ s/-/_/g;
-		if ( $key eq "Content_Length" ) {
-		  $response_event->setIntegerField ( $key => $_[0] );
-		}
-		else {
-		  $response_event->setStringField ( $key => $_[0] );
-		}
+		$response_event->setField ( $key => $_[0] );
 	};
 	my $request_content_reader = sub {
 		$_[0] = $requestEvent->getField ( 'envelope' );
 	};
 	my $response_content_writer = sub {
-		$response_event->setStringField ( 'envelope' => $_[0] );
+		$response_event->setField ( 'envelope' => $_[0] );
 	};
 
 	my $request_type  = $requestEvent->getTypeName;
